@@ -1,0 +1,41 @@
+name: Napravi CADRIA EDIT
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instaliraj biblioteke
+        run: python -m pip install --upgrade pip pyinstaller pywebview
+
+      - name: Napravi program
+        run: pyinstaller --noconfirm --onedir --windowed --name CadriaEdit --icon app/icon.ico --add-data "html;html" app/main.py
+
+      - name: Napravi instalaciju
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=1.${{ github.run_number }}" installer.iss
+
+      - name: Napravi prenosnu verziju (ZIP)
+        run: Compress-Archive -Path dist/CadriaEdit/* -DestinationPath dist/CadriaEdit-prenosna.zip
+
+      - name: Objavi u Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: CADRIA EDIT 1.${{ github.run_number }}
+          files: |
+            dist/CadriaEdit-Setup.exe
+            dist/CadriaEdit-prenosna.zip
